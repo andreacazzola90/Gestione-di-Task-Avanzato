@@ -1,23 +1,19 @@
 import { http, HttpResponse } from "msw";
+import type { Task, TaskState } from "@/app/definitions";
 
-export type Task = {
-  id: string;
-  title: string;
-  completed: boolean;
-  createdAt: string;
-};
+const ALLOWED_STATES: TaskState[] = ["To do", "in progress", "completed"];
 
 const initialTasks: Task[] = [
   {
     id: "task-1",
     title: "Prepare sprint planning",
-    completed: false,
+    state: "To do",
     createdAt: "2026-03-10T08:00:00.000Z",
   },
   {
     id: "task-2",
     title: "Review pull requests",
-    completed: true,
+    state: "completed",
     createdAt: "2026-03-09T14:30:00.000Z",
   },
 ];
@@ -46,7 +42,7 @@ export const handlers = [
     const newTask: Task = {
       id: `task-${crypto.randomUUID()}`,
       title: body.title.trim(),
-      completed: false,
+      state: "To do",
       createdAt: new Date().toISOString(),
     };
 
@@ -66,8 +62,15 @@ export const handlers = [
     }) => {
       const { id } = params;
       const body = (await request.json()) as Partial<
-        Pick<Task, "title" | "completed">
+        Pick<Task, "title" | "state">
       >;
+
+      if (body.state && !ALLOWED_STATES.includes(body.state)) {
+        return HttpResponse.json(
+          { message: "state must be one of: To do, in progress, completed" },
+          { status: 400 },
+        );
+      }
 
       const taskIndex = tasksStore.findIndex((task) => task.id === id);
 
@@ -82,10 +85,7 @@ export const handlers = [
       const updatedTask: Task = {
         ...currentTask,
         title: body.title?.trim() ? body.title.trim() : currentTask.title,
-        completed:
-          typeof body.completed === "boolean"
-            ? body.completed
-            : currentTask.completed,
+        state: body.state ?? currentTask.state,
       };
 
       tasksStore[taskIndex] = updatedTask;

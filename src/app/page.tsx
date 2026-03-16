@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -30,7 +29,7 @@ export default function Home() {
     reloadTasks,
     createTask,
     updateTask,
-    toggleTaskCompleted,
+    advanceTaskState,
     deleteTask,
   } = useTasks();
 
@@ -152,7 +151,7 @@ export default function Home() {
               <TaskCard
                 task={task}
                 isMutating={isMutating}
-                onToggleTaskCompleted={toggleTaskCompleted}
+                onAdvanceTaskState={advanceTaskState}
                 onDeleteTask={deleteTask}
                 onEditTask={updateTask}
               />

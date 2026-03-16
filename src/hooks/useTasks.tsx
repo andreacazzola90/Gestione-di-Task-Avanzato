@@ -1,7 +1,12 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { CreateTaskInput, Task, UpdateTaskInput } from "@/app/definitions";
+import type {
+  CreateTaskInput,
+  Task,
+  TaskState,
+  UpdateTaskInput,
+} from "@/app/definitions";
 import {
   createContext,
   type ReactNode,
@@ -23,9 +28,11 @@ type TasksContextValue = {
     title: string,
     description?: string,
   ) => Promise<boolean>;
-  toggleTaskCompleted: (id: string) => Promise<boolean>;
+  advanceTaskState: (id: string) => Promise<boolean>;
   deleteTask: (id: string) => Promise<boolean>;
 };
+
+const STATE_FLOW: TaskState[] = ["To do", "in progress", "completed"];
 
 const TasksContext = createContext<TasksContextValue | undefined>(undefined);
 
@@ -89,17 +96,17 @@ const updateTaskRequest = async ({
   return (await response.json()) as Task;
 };
 
-const updateTaskCompletedRequest = async ({
+const updateTaskStateRequest = async ({
   id,
-  completed,
+  state,
 }: {
   id: string;
-  completed: boolean;
+  state: TaskState;
 }) => {
   const response = await fetch(`/api/tasks/${id}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ completed }),
+    body: JSON.stringify({ state }),
   });
 
   if (!response.ok) {
@@ -150,7 +157,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
   });
 
   const toggleTaskMutation = useMutation({
-    mutationFn: updateTaskCompletedRequest,
+    mutationFn: updateTaskStateRequest,
     onSuccess: (updatedTask) => {
       queryClient.setQueryData<Task[]>(["tasks"], (currentTasks = []) =>
         currentTasks.map((task) =>
@@ -225,7 +232,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     [updateTaskMutation],
   );
 
-  const toggleTaskCompleted = useCallback(
+  const advanceTaskState = useCallback(
     async (id: string) => {
       const currentTasks = tasksQuery.data ?? [];
       const targetTask = currentTasks.find((task) => task.id === id);
@@ -237,10 +244,18 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
 
       setActionError(null);
 
+      const currentStateIndex = STATE_FLOW.indexOf(targetTask.state);
+      const nextState =
+        STATE_FLOW[
+          currentStateIndex >= 0
+            ? (currentStateIndex + 1) % STATE_FLOW.length
+            : 0
+        ];
+
       try {
         await toggleTaskMutation.mutateAsync({
           id,
-          completed: !targetTask.completed,
+          state: nextState,
         });
         return true;
       } catch (mutationError) {
@@ -286,7 +301,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
       reloadTasks,
       createTask,
       updateTask,
-      toggleTaskCompleted,
+      advanceTaskState,
       deleteTask,
     }),
     [
@@ -297,7 +312,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
       reloadTasks,
       createTask,
       updateTask,
-      toggleTaskCompleted,
+      advanceTaskState,
       deleteTask,
     ],
   );

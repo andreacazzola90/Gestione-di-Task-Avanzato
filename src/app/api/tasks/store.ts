@@ -6,7 +6,7 @@ const initialTasks: Task[] = [
     title: "Prepare sprint planning",
     description:
       "Organizza l'agenda per lo sprint planning: definisci le user story, stima i punti e assegna i task al team prima della riunione.",
-    completed: false,
+    state: "To do",
     createdAt: "2026-03-10T08:00:00.000Z",
   },
   {
@@ -14,13 +14,13 @@ const initialTasks: Task[] = [
     title: "Review pull requests",
     description:
       "Controlla le PR aperte su GitHub, verifica la qualità del codice e lascia commenti costruttivi prima di approvare o richiedere modifiche.",
-    completed: true,
+    state: "completed",
     createdAt: "2026-03-09T14:30:00.000Z",
   },
   {
     id: "task-3",
     title: "Write unit tests",
-    completed: false,
+    state: "in progress",
     createdAt: "2026-03-09T16:00:00.000Z",
   },
 ];
@@ -34,7 +34,7 @@ export const createTask = (title: string, description?: string) => {
     id: `task-${crypto.randomUUID()}`,
     title,
     ...(description ? { description } : {}),
-    completed: false,
+    state: "To do",
     createdAt: new Date().toISOString(),
   };
 
@@ -57,10 +57,7 @@ export const updateTask = (id: string, payload: UpdateTaskInput) => {
       "description" in payload
         ? payload.description?.trim() || undefined
         : currentTask.description,
-    completed:
-      typeof payload.completed === "boolean"
-        ? payload.completed
-        : currentTask.completed,
+    state: payload.state ?? currentTask.state,
   };
 
   tasksStore[taskIndex] = updatedTask;

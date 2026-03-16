@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
-import type { UpdateTaskInput } from "@/app/definitions";
+import type { TaskState, UpdateTaskInput } from "@/app/definitions";
 import { deleteTask, updateTask } from "../store";
+
+const ALLOWED_STATES: TaskState[] = ["To do", "in progress", "completed"];
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -9,6 +11,13 @@ type RouteContext = {
 export async function PATCH(request: Request, context: RouteContext) {
   const { id } = await context.params;
   const body = (await request.json()) as UpdateTaskInput;
+
+  if (body.state && !ALLOWED_STATES.includes(body.state)) {
+    return NextResponse.json(
+      { message: "state must be one of: To do, in progress, completed" },
+      { status: 400 },
+    );
+  }
 
   const updatedTask = updateTask(id, body);
 

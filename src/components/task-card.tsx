@@ -13,14 +13,14 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import type { Task } from "@/app/definitions";
+import type { Task, TaskState } from "@/app/definitions";
 import { toast } from "sonner";
 import { useState } from "react";
 
 type TaskCardProps = {
   task: Task;
   isMutating: boolean;
-  onToggleTaskCompleted: (id: string) => Promise<boolean>;
+  onAdvanceTaskState: (id: string) => Promise<boolean>;
   onDeleteTask: (id: string) => Promise<boolean>;
   onEditTask: (
     id: string,
@@ -32,10 +32,23 @@ type TaskCardProps = {
 export function TaskCard({
   task,
   isMutating,
-  onToggleTaskCompleted,
+  onAdvanceTaskState,
   onDeleteTask,
   onEditTask,
 }: TaskCardProps) {
+  const stateLabels: Record<TaskState, string> = {
+    "To do": "To do",
+    "in progress": "In progress",
+    completed: "Completed",
+  };
+
+  const stateFlow: TaskState[] = ["To do", "in progress", "completed"];
+  const currentStateIndex = stateFlow.indexOf(task.state);
+  const nextState =
+    stateFlow[
+      currentStateIndex >= 0 ? (currentStateIndex + 1) % stateFlow.length : 0
+    ];
+
   const createdAtText = new Date(task.createdAt).toLocaleString("it-IT");
   const [editOpen, setEditOpen] = useState(false);
   const [editTitle, setEditTitle] = useState(task.title);
@@ -79,7 +92,7 @@ export function TaskCard({
               ) : null}
               <p>
                 <span className="font-medium">Stato:</span>{" "}
-                {task.completed ? "Completato" : "Da fare"}
+                {stateLabels[task.state]}
               </p>
               <p>
                 <span className="font-medium">Creato il:</span> {createdAtText}
@@ -87,8 +100,8 @@ export function TaskCard({
             </div>
           </DialogContent>
         </Dialog>
-        <Badge variant={task.completed ? "secondary" : "outline"}>
-          {task.completed ? "Completato" : "Da fare"}
+        <Badge variant={task.state === "completed" ? "secondary" : "outline"}>
+          {stateLabels[task.state]}
         </Badge>
       </CardHeader>
       <CardContent>
@@ -120,7 +133,7 @@ export function TaskCard({
             size="sm"
             onClick={() => {
               void (async () => {
-                const wasUpdated = await onToggleTaskCompleted(task.id);
+                const wasUpdated = await onAdvanceTaskState(task.id);
 
                 if (wasUpdated) {
                   toast.success("Stato task aggiornato");
@@ -132,13 +145,21 @@ export function TaskCard({
             }}
             disabled={isMutating}
           >
-            {task.completed ? "Segna da fare" : "Segna completato"}
+            {`Passa a ${stateLabels[nextState]}`}
           </Button>
           <Button
             type="button"
             variant="destructive"
             size="sm"
             onClick={() => {
+              const isConfirmed = window.confirm(
+                `Sei sicuro di voler eliminare il task \"${task.title}\"?`,
+              );
+
+              if (!isConfirmed) {
+                return;
+              }
+
               void (async () => {
                 const wasDeleted = await onDeleteTask(task.id);
 
