@@ -14,6 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import type { Task, TaskState } from "@/app/definitions";
+import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
 
@@ -149,7 +150,7 @@ export function TaskCard({
           </Button>
           <Button
             type="button"
-            variant="destructive"
+            variant="outline"
             size="sm"
             onClick={() => {
               const isConfirmed = window.confirm(
@@ -173,6 +174,7 @@ export function TaskCard({
             }}
             disabled={isMutating}
           >
+            <Trash2 className="h-4 w-4" />
             Elimina
           </Button>
         </div>
