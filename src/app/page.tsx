@@ -29,6 +29,7 @@ export default function Home() {
     error,
     reloadTasks,
     createTask,
+    updateTask,
     toggleTaskCompleted,
     deleteTask,
   } = useTasks();
@@ -153,6 +154,7 @@ export default function Home() {
                 isMutating={isMutating}
                 onToggleTaskCompleted={toggleTaskCompleted}
                 onDeleteTask={deleteTask}
+                onEditTask={updateTask}
               />
             </li>
           ))}

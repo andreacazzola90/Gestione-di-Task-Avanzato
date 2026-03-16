@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { CreateTaskInput, Task } from "@/app/definitions";
+import type { CreateTaskInput, Task, UpdateTaskInput } from "@/app/definitions";
 import {
   createContext,
   type ReactNode,
@@ -18,6 +18,11 @@ type TasksContextValue = {
   error: string | null;
   reloadTasks: () => Promise<void>;
   createTask: (title: string, description?: string) => Promise<boolean>;
+  updateTask: (
+    id: string,
+    title: string,
+    description?: string,
+  ) => Promise<boolean>;
   toggleTaskCompleted: (id: string) => Promise<boolean>;
   deleteTask: (id: string) => Promise<boolean>;
 };
@@ -58,6 +63,23 @@ const createTaskRequest = async ({ title, description }: CreateTaskInput) => {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ title, description }),
+  });
+
+  if (!response.ok) {
+    throw new Error(await getResponseMessage(response));
+  }
+
+  return (await response.json()) as Task;
+};
+
+const updateTaskRequest = async ({
+  id,
+  ...fields
+}: { id: string } & UpdateTaskInput) => {
+  const response = await fetch(`/api/tasks/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(fields),
   });
 
   if (!response.ok) {
@@ -116,6 +138,17 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     },
   });
 
+  const updateTaskMutation = useMutation({
+    mutationFn: updateTaskRequest,
+    onSuccess: (updatedTask) => {
+      queryClient.setQueryData<Task[]>(["tasks"], (currentTasks = []) =>
+        currentTasks.map((task) =>
+          task.id === updatedTask.id ? updatedTask : task,
+        ),
+      );
+    },
+  });
+
   const toggleTaskMutation = useMutation({
     mutationFn: updateTaskCompletedRequest,
     onSuccess: (updatedTask) => {
@@ -166,6 +199,32 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     [createTaskMutation],
   );
 
+  const updateTask = useCallback(
+    async (id: string, title: string, description?: string) => {
+      const trimmedTitle = title.trim();
+
+      if (!trimmedTitle) {
+        setActionError("Il titolo del task e obbligatorio.");
+        return false;
+      }
+
+      setActionError(null);
+
+      try {
+        await updateTaskMutation.mutateAsync({
+          id,
+          title: trimmedTitle,
+          description: description?.trim() || undefined,
+        });
+        return true;
+      } catch (mutationError) {
+        setActionError(getErrorMessage(mutationError));
+        return false;
+      }
+    },
+    [updateTaskMutation],
+  );
+
   const toggleTaskCompleted = useCallback(
     async (id: string) => {
       const currentTasks = tasksQuery.data ?? [];
@@ -209,6 +268,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
 
   const isMutating =
     createTaskMutation.isPending ||
+    updateTaskMutation.isPending ||
     toggleTaskMutation.isPending ||
     deleteTaskMutation.isPending;
 
@@ -225,6 +285,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
       error,
       reloadTasks,
       createTask,
+      updateTask,
       toggleTaskCompleted,
       deleteTask,
     }),
@@ -235,6 +296,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
       error,
       reloadTasks,
       createTask,
+      updateTask,
       toggleTaskCompleted,
       deleteTask,
     ],

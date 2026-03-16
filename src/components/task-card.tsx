@@ -11,14 +11,22 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import type { Task } from "@/app/definitions";
 import { toast } from "sonner";
+import { useState } from "react";
 
 type TaskCardProps = {
   task: Task;
   isMutating: boolean;
   onToggleTaskCompleted: (id: string) => Promise<boolean>;
   onDeleteTask: (id: string) => Promise<boolean>;
+  onEditTask: (
+    id: string,
+    title: string,
+    description?: string,
+  ) => Promise<boolean>;
 };
 
 export function TaskCard({
@@ -26,8 +34,14 @@ export function TaskCard({
   isMutating,
   onToggleTaskCompleted,
   onDeleteTask,
+  onEditTask,
 }: TaskCardProps) {
   const createdAtText = new Date(task.createdAt).toLocaleString("it-IT");
+  const [editOpen, setEditOpen] = useState(false);
+  const [editTitle, setEditTitle] = useState(task.title);
+  const [editDescription, setEditDescription] = useState(
+    task.description ?? "",
+  );
 
   return (
     <Card>
@@ -92,6 +106,19 @@ export function TaskCard({
             variant="outline"
             size="sm"
             onClick={() => {
+              setEditTitle(task.title);
+              setEditDescription(task.description ?? "");
+              setEditOpen(true);
+            }}
+            disabled={isMutating}
+          >
+            Modifica
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => {
               void (async () => {
                 const wasUpdated = await onToggleTaskCompleted(task.id);
 
@@ -129,6 +156,83 @@ export function TaskCard({
           </Button>
         </div>
       </CardContent>
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Modifica task</DialogTitle>
+            <DialogDescription>
+              Aggiorna il titolo e la descrizione del task.
+            </DialogDescription>
+          </DialogHeader>
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              void (async () => {
+                const wasUpdated = await onEditTask(
+                  task.id,
+                  editTitle,
+                  editDescription,
+                );
+                if (wasUpdated) {
+                  setEditOpen(false);
+                  toast.success("Task aggiornato correttamente");
+                  return;
+                }
+                toast.error("Impossibile aggiornare il task");
+              })();
+            }}
+            className="flex flex-col gap-4"
+          >
+            <div className="flex flex-col gap-1.5">
+              <label
+                htmlFor={`edit-title-${task.id}`}
+                className="text-sm font-medium"
+              >
+                Titolo <span className="text-destructive">*</span>
+              </label>
+              <Input
+                id={`edit-title-${task.id}`}
+                type="text"
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                placeholder="Titolo del task"
+                autoFocus
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label
+                htmlFor={`edit-desc-${task.id}`}
+                className="text-sm font-medium"
+              >
+                Descrizione
+                <span className="ml-1 text-xs font-normal text-muted-foreground">
+                  (opzionale)
+                </span>
+              </label>
+              <Textarea
+                id={`edit-desc-${task.id}`}
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+                placeholder="Aggiungi una descrizione..."
+                rows={3}
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setEditOpen(false)}
+                disabled={isMutating}
+              >
+                Annulla
+              </Button>
+              <Button type="submit" disabled={isMutating || !editTitle.trim()}>
+                Salva
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
