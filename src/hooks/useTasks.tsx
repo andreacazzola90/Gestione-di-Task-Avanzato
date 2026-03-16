@@ -22,11 +22,11 @@ type TasksContextValue = {
   isMutating: boolean;
   error: string | null;
   reloadTasks: () => Promise<void>;
-  createTask: (title: string, description?: string) => Promise<boolean>;
+  createTask: (title: string, description: string) => Promise<boolean>;
   updateTask: (
     id: string,
     title: string,
-    description?: string,
+    description: string,
   ) => Promise<boolean>;
   advanceTaskState: (id: string) => Promise<boolean>;
   deleteTask: (id: string) => Promise<boolean>;
@@ -182,11 +182,17 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
   }, [tasksQuery]);
 
   const createTask = useCallback(
-    async (title: string, description?: string) => {
+    async (title: string, description: string) => {
       const trimmedTitle = title.trim();
+      const trimmedDescription = description.trim();
 
       if (!trimmedTitle) {
         setActionError("Il titolo del task e obbligatorio.");
+        return false;
+      }
+
+      if (!trimmedDescription) {
+        setActionError("La descrizione del task e obbligatoria.");
         return false;
       }
 
@@ -195,7 +201,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
       try {
         await createTaskMutation.mutateAsync({
           title: trimmedTitle,
-          description: description?.trim() || undefined,
+          description: trimmedDescription,
         });
         return true;
       } catch (mutationError) {
@@ -207,11 +213,17 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
   );
 
   const updateTask = useCallback(
-    async (id: string, title: string, description?: string) => {
+    async (id: string, title: string, description: string) => {
       const trimmedTitle = title.trim();
+      const trimmedDescription = description.trim();
 
       if (!trimmedTitle) {
         setActionError("Il titolo del task e obbligatorio.");
+        return false;
+      }
+
+      if (!trimmedDescription) {
+        setActionError("La descrizione del task e obbligatoria.");
         return false;
       }
 
@@ -221,7 +233,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
         await updateTaskMutation.mutateAsync({
           id,
           title: trimmedTitle,
-          description: description?.trim() || undefined,
+          description: trimmedDescription,
         });
         return true;
       } catch (mutationError) {

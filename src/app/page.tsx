@@ -5,6 +5,9 @@ import { useTasks } from "@/hooks/useTasks";
 import { CircleAlert, Plus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -17,10 +20,29 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
+const createTaskSchema = z.object({
+  title: z.string().trim().min(1, "Il titolo e obbligatorio"),
+  description: z.string().trim().min(1, "La descrizione e obbligatoria"),
+});
+
+type CreateTaskFormValues = z.infer<typeof createTaskSchema>;
+
 export default function Home() {
   const [open, setOpen] = useState(false);
-  const [newTaskTitle, setNewTaskTitle] = useState("");
-  const [newTaskDescription, setNewTaskDescription] = useState("");
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors: createErrors, isSubmitting: isSubmittingCreate },
+  } = useForm<CreateTaskFormValues>({
+    resolver: zodResolver(createTaskSchema),
+    defaultValues: {
+      title: "",
+      description: "",
+    },
+  });
+
   const {
     tasks,
     isLoading,
@@ -33,13 +55,11 @@ export default function Home() {
     deleteTask,
   } = useTasks();
 
-  const handleCreateTask = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const wasCreated = await createTask(newTaskTitle, newTaskDescription);
+  const handleCreateTask = async (values: CreateTaskFormValues) => {
+    const wasCreated = await createTask(values.title, values.description);
 
     if (wasCreated) {
-      setNewTaskTitle("");
-      setNewTaskDescription("");
+      reset();
       setOpen(false);
       toast.success("Task creato correttamente");
       return;
@@ -48,12 +68,20 @@ export default function Home() {
     toast.error("Impossibile creare il task");
   };
 
+  const handleCreateDialogChange = (isOpen: boolean) => {
+    setOpen(isOpen);
+
+    if (!isOpen) {
+      reset();
+    }
+  };
+
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-3xl flex-col gap-6 bg-zinc-50 px-6 py-12 text-zinc-900 sm:px-10">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-semibold tracking-tight">Task caricati</h1>
         <div className="flex gap-2">
-          <Dialog open={open} onOpenChange={setOpen}>
+          <Dialog open={open} onOpenChange={handleCreateDialogChange}>
             <DialogTrigger asChild>
               <Button type="button">
                 <Plus />
@@ -64,7 +92,10 @@ export default function Home() {
               <DialogHeader>
                 <DialogTitle>Nuovo task</DialogTitle>
               </DialogHeader>
-              <form onSubmit={handleCreateTask} className="flex flex-col gap-4">
+              <form
+                onSubmit={handleSubmit(handleCreateTask)}
+                className="flex flex-col gap-4"
+              >
                 <div className="flex flex-col gap-1.5">
                   <label htmlFor="task-title" className="text-sm font-medium">
                     Titolo <span className="text-destructive">*</span>
@@ -72,43 +103,49 @@ export default function Home() {
                   <Input
                     id="task-title"
                     type="text"
-                    value={newTaskTitle}
-                    onChange={(event) => {
-                      setNewTaskTitle(event.target.value);
-                    }}
+                    aria-invalid={Boolean(createErrors.title)}
+                    {...register("title")}
                     placeholder="Titolo del task"
                     autoFocus
                   />
+                  {createErrors.title ? (
+                    <p className="text-sm text-destructive">
+                      {createErrors.title.message}
+                    </p>
+                  ) : null}
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <label
                     htmlFor="task-description"
                     className="text-sm font-medium"
                   >
-                    Descrizione
-                    <span className="ml-1 text-xs font-normal text-muted-foreground">
-                      (opzionale)
-                    </span>
+                    Descrizione <span className="text-destructive">*</span>
                   </label>
                   <Textarea
                     id="task-description"
-                    value={newTaskDescription}
-                    onChange={(event) => {
-                      setNewTaskDescription(event.target.value);
-                    }}
+                    aria-invalid={Boolean(createErrors.description)}
+                    {...register("description")}
                     placeholder="Aggiungi una descrizione..."
                     rows={3}
                   />
+                  {createErrors.description ? (
+                    <p className="text-sm text-destructive">
+                      {createErrors.description.message}
+                    </p>
+                  ) : null}
                 </div>
                 <div className="flex justify-end gap-2">
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => setOpen(false)}
+                    onClick={() => handleCreateDialogChange(false)}
                   >
                     Annulla
                   </Button>
-                  <Button type="submit" disabled={isMutating || isLoading}>
+                  <Button
+                    type="submit"
+                    disabled={isMutating || isLoading || isSubmittingCreate}
+                  >
                     Aggiungi
                   </Button>
                 </div>

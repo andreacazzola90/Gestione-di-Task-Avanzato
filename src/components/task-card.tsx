@@ -17,6 +17,16 @@ import type { Task, TaskState } from "@/app/definitions";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+
+const editTaskSchema = z.object({
+  title: z.string().trim().min(1, "Il titolo e obbligatorio"),
+  description: z.string().trim().min(1, "La descrizione e obbligatoria"),
+});
+
+type EditTaskFormValues = z.infer<typeof editTaskSchema>;
 
 type TaskCardProps = {
   task: Task;
@@ -26,7 +36,7 @@ type TaskCardProps = {
   onEditTask: (
     id: string,
     title: string,
-    description?: string,
+    description: string,
   ) => Promise<boolean>;
 };
 
@@ -52,10 +62,43 @@ export function TaskCard({
 
   const createdAtText = new Date(task.createdAt).toLocaleString("it-IT");
   const [editOpen, setEditOpen] = useState(false);
-  const [editTitle, setEditTitle] = useState(task.title);
-  const [editDescription, setEditDescription] = useState(
-    task.description ?? "",
-  );
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors: editErrors, isSubmitting: isSubmittingEdit },
+  } = useForm<EditTaskFormValues>({
+    resolver: zodResolver(editTaskSchema),
+    defaultValues: {
+      title: task.title,
+      description: task.description ?? "",
+    },
+  });
+
+  const handleEditDialogChange = (isOpen: boolean) => {
+    setEditOpen(isOpen);
+
+    if (!isOpen) {
+      reset({
+        title: task.title,
+        description: task.description ?? "",
+      });
+    }
+  };
+
+  const handleEditTask = async (values: EditTaskFormValues) => {
+    const wasUpdated = await onEditTask(
+      task.id,
+      values.title,
+      values.description,
+    );
+    if (wasUpdated) {
+      setEditOpen(false);
+      toast.success("Task aggiornato correttamente");
+      return;
+    }
+    toast.error("Impossibile aggiornare il task");
+  };
 
   return (
     <Card>
@@ -120,8 +163,10 @@ export function TaskCard({
             variant="outline"
             size="sm"
             onClick={() => {
-              setEditTitle(task.title);
-              setEditDescription(task.description ?? "");
+              reset({
+                title: task.title,
+                description: task.description ?? "",
+              });
               setEditOpen(true);
             }}
             disabled={isMutating}
@@ -179,7 +224,7 @@ export function TaskCard({
           </Button>
         </div>
       </CardContent>
-      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+      <Dialog open={editOpen} onOpenChange={handleEditDialogChange}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Modifica task</DialogTitle>
@@ -188,22 +233,7 @@ export function TaskCard({
             </DialogDescription>
           </DialogHeader>
           <form
-            onSubmit={(event) => {
-              event.preventDefault();
-              void (async () => {
-                const wasUpdated = await onEditTask(
-                  task.id,
-                  editTitle,
-                  editDescription,
-                );
-                if (wasUpdated) {
-                  setEditOpen(false);
-                  toast.success("Task aggiornato correttamente");
-                  return;
-                }
-                toast.error("Impossibile aggiornare il task");
-              })();
-            }}
+            onSubmit={handleSubmit(handleEditTask)}
             className="flex flex-col gap-4"
           >
             <div className="flex flex-col gap-1.5">
@@ -216,40 +246,47 @@ export function TaskCard({
               <Input
                 id={`edit-title-${task.id}`}
                 type="text"
-                value={editTitle}
-                onChange={(e) => setEditTitle(e.target.value)}
+                aria-invalid={Boolean(editErrors.title)}
+                {...register("title")}
                 placeholder="Titolo del task"
                 autoFocus
               />
+              {editErrors.title ? (
+                <p className="text-sm text-destructive">
+                  {editErrors.title.message}
+                </p>
+              ) : null}
             </div>
             <div className="flex flex-col gap-1.5">
               <label
                 htmlFor={`edit-desc-${task.id}`}
                 className="text-sm font-medium"
               >
-                Descrizione
-                <span className="ml-1 text-xs font-normal text-muted-foreground">
-                  (opzionale)
-                </span>
+                Descrizione <span className="text-destructive">*</span>
               </label>
               <Textarea
                 id={`edit-desc-${task.id}`}
-                value={editDescription}
-                onChange={(e) => setEditDescription(e.target.value)}
+                aria-invalid={Boolean(editErrors.description)}
+                {...register("description")}
                 placeholder="Aggiungi una descrizione..."
                 rows={3}
               />
+              {editErrors.description ? (
+                <p className="text-sm text-destructive">
+                  {editErrors.description.message}
+                </p>
+              ) : null}
             </div>
             <div className="flex justify-end gap-2">
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setEditOpen(false)}
+                onClick={() => handleEditDialogChange(false)}
                 disabled={isMutating}
               >
                 Annulla
               </Button>
-              <Button type="submit" disabled={isMutating || !editTitle.trim()}>
+              <Button type="submit" disabled={isMutating || isSubmittingEdit}>
                 Salva
               </Button>
             </div>
