@@ -49,7 +49,7 @@ npm run test:watch
 ## Note su architettura e librerie
 
 - Framework: Next.js (App Router) con React e TypeScript.
-- UI: componenti riutilizzabili (base Radix UI) e styling con Tailwind CSS.
+- UI: componenti riutilizzabili (Shadcn) e styling con Tailwind CSS.
 - Form: React Hook Form + Zod per validazione schema-based.
 - Stato server e fetch: hook custom in src/hooks/useTasks.tsx.
 - Test: Jest + Testing Library, con mocking API tramite MSW.
