@@ -81,4 +81,20 @@ describe("tasks store", () => {
 
     expect(deleted).toBe(false);
   });
+
+  it("resets tasks to initial values", async () => {
+    const store = await loadStore();
+
+    store.createTask("Task temporaneo", "desc");
+    store.updateTask("task-1", { title: "Titolo modificato" });
+    store.deleteTask("task-2");
+
+    const reset = store.resetTasks();
+
+    expect(reset).toHaveLength(3);
+    expect(reset[0].id).toBe("task-1");
+    expect(reset[0].title).toBe("Prepare sprint planning");
+    expect(reset[1].id).toBe("task-2");
+    expect(reset[2].id).toBe("task-3");
+  });
 });

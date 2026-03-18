@@ -1,7 +1,10 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Task Manager – E2E", () => {
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page, request }) => {
+    const resetResponse = await request.post("/api/tasks/reset");
+    expect(resetResponse.ok()).toBeTruthy();
+
     await page.goto("/");
     await expect(page.getByText("Task Manager Dashboard")).toBeVisible({
       timeout: 10_000,

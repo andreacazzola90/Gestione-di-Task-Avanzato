@@ -72,3 +72,8 @@ export const deleteTask = (id: string) => {
 
   return tasksStore.length < previousLength;
 };
+
+export const resetTasks = () => {
+  tasksStore = structuredClone(initialTasks);
+  return tasksStore;
+};
