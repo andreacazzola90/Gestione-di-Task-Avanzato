@@ -34,16 +34,20 @@ npm run dev
 
 ## Esecuzione test
 
+### Unit test
+
 Per eseguire i test:
 
 ```bash
 npm test
 ```
 
-Opzionale, esecuzione continua in watch mode:
+### e2e test
+
+Per eseguire i test:
 
 ```bash
-npm run test:watch
+npm test:e2e
 ```
 
 ## Note su architettura e librerie
