@@ -608,11 +608,9 @@ export default function Home() {
                           <p className="text-sm font-medium">
                             {column.label} ({columnTasks.length})
                           </p>
-                          {isMutating ? (
-                            <span className="text-xs text-zinc-500">
-                              Aggiornamento...
-                            </span>
-                          ) : null}
+                          <span className="text-xs text-zinc-500">
+                            {isMutating ? "Aggiornamento..." : "Drag & drop"}
+                          </span>
                         </div>
                         <div className="space-y-3 min-h-24">
                           {columnTasks.map((task) => (
