@@ -1,6 +1,5 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -14,7 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import type { Task, TaskState } from "@/app/definitions";
-import { Trash2 } from "lucide-react";
+import { GripVertical, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -30,8 +29,13 @@ type EditTaskFormValues = z.infer<typeof editTaskSchema>;
 
 type TaskCardProps = {
   task: Task;
+  compact?: boolean;
   isMutating: boolean;
-  onAdvanceTaskState: (id: string) => Promise<boolean>;
+  draggable?: boolean;
+  isDragging?: boolean;
+  onDragStart?: (task: Task) => void;
+  onDragEnd?: () => void;
+  onUpdateTaskState: (id: string, state: TaskState) => Promise<boolean>;
   onDeleteTask: (id: string) => Promise<boolean>;
   onEditTask: (
     id: string,
@@ -42,8 +46,13 @@ type TaskCardProps = {
 
 export function TaskCard({
   task,
+  compact = false,
   isMutating,
-  onAdvanceTaskState,
+  draggable = false,
+  isDragging = false,
+  onDragStart,
+  onDragEnd,
+  onUpdateTaskState,
   onDeleteTask,
   onEditTask,
 }: TaskCardProps) {
@@ -52,13 +61,6 @@ export function TaskCard({
     "in progress": "In progress",
     completed: "Completed",
   };
-
-  const stateFlow: TaskState[] = ["To do", "in progress", "completed"];
-  const currentStateIndex = stateFlow.indexOf(task.state);
-  const nextState =
-    stateFlow[
-      currentStateIndex >= 0 ? (currentStateIndex + 1) % stateFlow.length : 0
-    ];
 
   const createdAtText = new Date(task.createdAt).toLocaleString("it-IT");
   const [editOpen, setEditOpen] = useState(false);
@@ -101,13 +103,33 @@ export function TaskCard({
   };
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-start justify-between gap-3">
+    <Card
+      className={`transition-opacity ${compact ? "gap-3 py-4" : ""} ${
+        isDragging ? "opacity-50" : "opacity-100"
+      }`}
+      draggable={draggable && !isMutating}
+      onDragStart={() => onDragStart?.(task)}
+      onDragEnd={() => onDragEnd?.()}
+      data-task-id={task.id}
+    >
+      <CardHeader
+        className={`flex flex-row items-start justify-between gap-3 ${
+          compact ? "px-4" : ""
+        }`}
+      >
+        {draggable ? (
+          <div className="flex items-center gap-2 text-zinc-400">
+            <GripVertical className="h-4 w-4" aria-hidden="true" />
+            <span className="sr-only">Drag task</span>
+          </div>
+        ) : null}
         <Dialog>
           <DialogTrigger asChild>
             <button
               type="button"
-              className="text-left text-base font-semibold underline-offset-4 hover:underline"
+              className={`text-left font-semibold underline-offset-4 hover:underline ${
+                compact ? "text-sm" : "text-base"
+              }`}
             >
               <CardTitle>{task.title}</CardTitle>
             </button>
@@ -144,20 +166,56 @@ export function TaskCard({
             </div>
           </DialogContent>
         </Dialog>
-        <Badge variant={task.state === "completed" ? "secondary" : "outline"}>
-          {stateLabels[task.state]}
-        </Badge>
+        <div className="flex items-center gap-2">
+          <label htmlFor={`task-state-${task.id}`} className="sr-only">
+            Stato task
+          </label>
+          <select
+            id={`task-state-${task.id}`}
+            value={task.state}
+            className={`rounded-full border border-input bg-background px-2 text-xs ${
+              compact ? "h-6" : "h-7"
+            }`}
+            onChange={(event) => {
+              const nextState = event.target.value as TaskState;
+
+              void (async () => {
+                const wasUpdated = await onUpdateTaskState(task.id, nextState);
+
+                if (wasUpdated) {
+                  toast.success("Stato task aggiornato");
+                  return;
+                }
+
+                toast.error("Impossibile aggiornare il task");
+              })();
+            }}
+            disabled={isMutating}
+          >
+            <option value="To do">To do</option>
+            <option value="in progress">In progress</option>
+            <option value="completed">Completed</option>
+          </select>
+        </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className={compact ? "px-4" : undefined}>
         {task.description ? (
-          <p className="line-clamp-2 text-sm text-muted-foreground">
+          <p
+            className={`text-muted-foreground ${
+              compact ? "line-clamp-1 text-xs" : "line-clamp-2 text-sm"
+            }`}
+          >
             {task.description}
           </p>
         ) : null}
-        <p className="mt-2 text-sm text-muted-foreground">
+        <p
+          className={`text-muted-foreground ${
+            compact ? "mt-1 text-xs" : "mt-2 text-sm"
+          }`}
+        >
           Creato il {createdAtText}
         </p>
-        <div className="mt-4 flex gap-2">
+        <div className={`flex gap-2 ${compact ? "mt-2" : "mt-4"}`}>
           <Button
             type="button"
             variant="outline"
@@ -171,27 +229,8 @@ export function TaskCard({
             }}
             disabled={isMutating}
           >
+            <Pencil className="h-4 w-4" />
             Modifica
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              void (async () => {
-                const wasUpdated = await onAdvanceTaskState(task.id);
-
-                if (wasUpdated) {
-                  toast.success("Stato task aggiornato");
-                  return;
-                }
-
-                toast.error("Impossibile aggiornare il task");
-              })();
-            }}
-            disabled={isMutating}
-          >
-            {`Passa a ${stateLabels[nextState]}`}
           </Button>
           <Button
             type="button"

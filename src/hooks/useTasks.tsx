@@ -28,6 +28,7 @@ type TasksContextValue = {
     title: string,
     description: string,
   ) => Promise<boolean>;
+  setTaskState: (id: string, state: TaskState) => Promise<boolean>;
   advanceTaskState: (id: string) => Promise<boolean>;
   deleteTask: (id: string) => Promise<boolean>;
 };
@@ -278,6 +279,24 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     [tasksQuery.data, toggleTaskMutation],
   );
 
+  const setTaskState = useCallback(
+    async (id: string, state: TaskState) => {
+      setActionError(null);
+
+      try {
+        await toggleTaskMutation.mutateAsync({
+          id,
+          state,
+        });
+        return true;
+      } catch (mutationError) {
+        setActionError(getErrorMessage(mutationError));
+        return false;
+      }
+    },
+    [toggleTaskMutation],
+  );
+
   const deleteTask = useCallback(
     async (id: string) => {
       setActionError(null);
@@ -313,6 +332,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
       reloadTasks,
       createTask,
       updateTask,
+      setTaskState,
       advanceTaskState,
       deleteTask,
     }),
@@ -324,6 +344,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
       reloadTasks,
       createTask,
       updateTask,
+      setTaskState,
       advanceTaskState,
       deleteTask,
     ],
