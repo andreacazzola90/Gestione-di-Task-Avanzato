@@ -389,65 +389,58 @@ export default function Home() {
             </CardHeader>
             <CardContent>
               {viewMode === "list" ? (
-                <div className="mb-4 flex flex-col gap-3 rounded-lg border bg-zinc-50 p-3">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Input
-                      id="filter-tasks"
-                      value={queryFilter}
-                      onChange={(event) => setQueryFilter(event.target.value)}
-                      placeholder="Filter tasks..."
-                      className="h-11 max-w-md bg-white"
-                    />
+                <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border bg-zinc-50 p-3">
+                  <Input
+                    id="filter-tasks"
+                    value={queryFilter}
+                    onChange={(event) => setQueryFilter(event.target.value)}
+                    placeholder="Filter tasks..."
+                    className="h-9 w-48 bg-white"
+                  />
+                  <select
+                    id="filter-state"
+                    className="h-9 rounded-lg border border-dashed border-zinc-300 bg-white px-3 text-sm"
+                    value={stateFilter}
+                    onChange={(event) =>
+                      setStateFilter(event.target.value as "all" | TaskState)
+                    }
+                  >
+                    <option value="all">+ Status</option>
+                    <option value="To do">To do</option>
+                    <option value="in progress">In progress</option>
+                    <option value="completed">Completed</option>
+                  </select>
+                  <div className="ml-auto flex items-center gap-2">
+                    <Filter className="h-4 w-4 text-zinc-500" />
                     <select
-                      id="filter-state"
-                      className="h-11 rounded-lg border border-dashed border-zinc-300 bg-white px-3 text-sm"
-                      value={stateFilter}
+                      id="sort-by"
+                      className="h-9 rounded-lg border border-zinc-200 bg-white px-3 text-sm"
+                      value={sortBy}
                       onChange={(event) =>
-                        setStateFilter(event.target.value as "all" | TaskState)
+                        setSortBy(
+                          event.target.value as "createdAt" | "title" | "state",
+                        )
                       }
                     >
-                      <option value="all">+ Status</option>
-                      <option value="To do">To do</option>
-                      <option value="in progress">In progress</option>
-                      <option value="completed">Completed</option>
+                      <option value="createdAt">Ordina: Data</option>
+                      <option value="title">Ordina: Titolo</option>
+                      <option value="state">Ordina: Stato</option>
                     </select>
-                    <div className="ml-auto flex items-center gap-2">
-                      <Filter className="h-4 w-4 text-zinc-500" />
-                      <select
-                        id="sort-by"
-                        className="h-11 rounded-lg border border-zinc-200 bg-white px-3 text-sm"
-                        value={sortBy}
-                        onChange={(event) =>
-                          setSortBy(
-                            event.target.value as
-                              | "createdAt"
-                              | "title"
-                              | "state",
-                          )
-                        }
-                      >
-                        <option value="createdAt">Ordina: Data</option>
-                        <option value="title">Ordina: Titolo</option>
-                        <option value="state">Ordina: Stato</option>
-                      </select>
-                      <select
-                        id="sort-direction"
-                        className="h-11 rounded-lg border border-zinc-200 bg-white px-3 text-sm"
-                        value={sortDirection}
-                        onChange={(event) =>
-                          setSortDirection(event.target.value as "asc" | "desc")
-                        }
-                      >
-                        <option value="asc">Asc</option>
-                        <option value="desc">Desc</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div>
+                    <select
+                      id="sort-direction"
+                      className="h-9 rounded-lg border border-zinc-200 bg-white px-3 text-sm"
+                      value={sortDirection}
+                      onChange={(event) =>
+                        setSortDirection(event.target.value as "asc" | "desc")
+                      }
+                    >
+                      <option value="asc">Asc</option>
+                      <option value="desc">Desc</option>
+                    </select>
                     <Button
                       type="button"
                       variant="outline"
+                      size="sm"
                       onClick={() => {
                         setQueryFilter("");
                         setStateFilter("all");
@@ -492,13 +485,7 @@ export default function Home() {
               tasks.length > 0 &&
               viewMode === "list" ? (
                 <ul className="overflow-hidden rounded-lg border bg-white">
-                  <li className="hidden grid-cols-[44px_1fr_180px_130px] items-center gap-3 border-b bg-zinc-50 px-3 py-2 text-sm font-medium text-zinc-600 md:grid">
-                    <div>
-                      <input
-                        type="checkbox"
-                        aria-label="Seleziona tutti i task"
-                      />
-                    </div>
+                  <li className="hidden grid-cols-[1fr_180px_130px] items-center gap-3 border-b bg-zinc-50 px-3 py-2 text-sm font-medium text-zinc-600 md:grid">
                     <p>Task</p>
                     <p>Stato</p>
                     <p className="text-right">Azioni</p>
@@ -506,14 +493,8 @@ export default function Home() {
                   {filteredListTasks.map((task) => (
                     <li
                       key={task.id}
-                      className="grid grid-cols-1 gap-2 border-b px-3 py-3 text-sm last:border-b-0 md:grid-cols-[44px_1fr_180px_130px] md:items-center md:gap-3"
+                      className="grid grid-cols-1 gap-2 border-b px-3 py-3 text-sm last:border-b-0 md:grid-cols-[1fr_180px_130px] md:items-center md:gap-3"
                     >
-                      <div className="pt-1">
-                        <input
-                          type="checkbox"
-                          aria-label={`Seleziona task ${task.id}`}
-                        />
-                      </div>
                       <div className="min-w-0">
                         <p className="truncate text-zinc-800">{task.title}</p>
                         {task.description ? (
