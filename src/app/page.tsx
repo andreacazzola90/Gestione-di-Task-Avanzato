@@ -294,7 +294,7 @@ export default function Home() {
 
         <section className="space-y-6">
           <Card className="bg-white/90">
-            <CardHeader className="flex flex-col justify-between gap-4 md:flex-row md:items-start">
+            <CardHeader className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
               <div>
                 <CardTitle>
                   {viewMode === "list"
@@ -608,9 +608,11 @@ export default function Home() {
                           <p className="text-sm font-medium">
                             {column.label} ({columnTasks.length})
                           </p>
-                          <span className="text-xs text-zinc-500">
-                            {isMutating ? "Aggiornamento..." : "Drag & drop"}
-                          </span>
+                          {isMutating ? (
+                            <span className="text-xs text-zinc-500">
+                              Aggiornamento...
+                            </span>
+                          ) : null}
                         </div>
                         <div className="space-y-3 min-h-24">
                           {columnTasks.map((task) => (
