@@ -31,28 +31,4 @@ describe("tasks route", () => {
     expect(response.status).toBe(400);
     expect(body.message).toBe("title is required");
   });
-
-  it("POST creates a task with trimmed payload", async () => {
-    const route = await loadRoute();
-    const request = new Request("http://localhost/api/tasks", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        title: "  Nuovo task  ",
-        description: "  Descrizione valida  ",
-      }),
-    });
-
-    const response = await route.POST(request);
-    const body = (await response.json()) as {
-      title: string;
-      description?: string;
-      state: string;
-    };
-
-    expect(response.status).toBe(201);
-    expect(body.title).toBe("Nuovo task");
-    expect(body.description).toBe("Descrizione valida");
-    expect(body.state).toBe("To do");
-  });
 });

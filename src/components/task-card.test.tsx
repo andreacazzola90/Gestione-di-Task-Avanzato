@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { TaskCard } from "./task-card";
 
@@ -21,7 +21,7 @@ describe("TaskCard", () => {
   const setup = (
     overrides?: Partial<React.ComponentProps<typeof TaskCard>>,
   ) => {
-    const onAdvanceTaskState = jest.fn().mockResolvedValue(true);
+    const onUpdateTaskState = jest.fn().mockResolvedValue(true);
     const onDeleteTask = jest.fn().mockResolvedValue(true);
     const onEditTask = jest.fn().mockResolvedValue(true);
 
@@ -29,49 +29,39 @@ describe("TaskCard", () => {
       <TaskCard
         task={baseTask}
         isMutating={false}
-        onAdvanceTaskState={onAdvanceTaskState}
+        onUpdateTaskState={onUpdateTaskState}
         onDeleteTask={onDeleteTask}
         onEditTask={onEditTask}
         {...overrides}
       />,
     );
 
-    return { onAdvanceTaskState, onDeleteTask, onEditTask };
+    return { onUpdateTaskState, onDeleteTask, onEditTask };
   };
 
-  it("renders next state action", () => {
+  it("renders task title and state selector", () => {
     setup();
-
-    expect(
-      screen.getByRole("button", { name: /passa a in progress/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Task title")).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: /stato task/i })).toHaveValue(
+      "To do",
+    );
   });
 
-  it("does not delete when confirmation is cancelled", async () => {
+  it("updates task state using the select", async () => {
     const user = userEvent.setup();
-    const confirmSpy = jest.spyOn(window, "confirm").mockReturnValue(false);
-    const { onDeleteTask } = setup();
+    const { onUpdateTaskState } = setup();
 
-    await user.click(screen.getByRole("button", { name: /elimina/i }));
+    await user.selectOptions(
+      screen.getByRole("combobox", { name: /stato task/i }),
+      "in progress",
+    );
 
-    expect(confirmSpy).toHaveBeenCalled();
-    expect(onDeleteTask).not.toHaveBeenCalled();
-
-    confirmSpy.mockRestore();
+    await waitFor(() => {
+      expect(onUpdateTaskState).toHaveBeenCalledWith("task-1", "in progress");
+    });
   });
 
-  it("deletes when confirmation is accepted", async () => {
-    const user = userEvent.setup();
-    const confirmSpy = jest.spyOn(window, "confirm").mockReturnValue(true);
-    const { onDeleteTask } = setup();
-
-    await user.click(screen.getByRole("button", { name: /elimina/i }));
-
-    await waitFor(() => expect(onDeleteTask).toHaveBeenCalledWith("task-1"));
-    confirmSpy.mockRestore();
-  });
-
-  it("shows validation errors under edit inputs", async () => {
+  it("opens edit dialog and validates required fields", async () => {
     const user = userEvent.setup();
     setup();
 
@@ -90,5 +80,34 @@ describe("TaskCard", () => {
     expect(
       await screen.findByText("La descrizione e obbligatoria"),
     ).toBeInTheDocument();
+  });
+
+  it("confirms delete via dialog and calls onDeleteTask", async () => {
+    const user = userEvent.setup();
+    const { onDeleteTask } = setup();
+
+    await user.click(screen.getByRole("button", { name: /elimina/i }));
+    const dialog = await screen.findByRole("dialog");
+    await user.click(
+      within(dialog).getByRole("button", { name: /^elimina$/i }),
+    );
+
+    await waitFor(() => {
+      expect(onDeleteTask).toHaveBeenCalledWith("task-1");
+    });
+  });
+
+  it("cancels delete dialog without deleting", async () => {
+    const user = userEvent.setup();
+    const { onDeleteTask } = setup();
+
+    await user.click(screen.getByRole("button", { name: /elimina/i }));
+    const dialog = await screen.findByRole("dialog");
+    await user.click(within(dialog).getByRole("button", { name: /annulla/i }));
+
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    });
+    expect(onDeleteTask).not.toHaveBeenCalled();
   });
 });

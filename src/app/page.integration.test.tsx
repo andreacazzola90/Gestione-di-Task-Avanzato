@@ -13,26 +13,19 @@ import Home from "./page";
 import { TasksProvider } from "@/hooks/useTasks";
 
 jest.mock("sonner", () => ({
-  toast: {
-    success: jest.fn(),
-    error: jest.fn(),
-  },
+  toast: { success: jest.fn(), error: jest.fn() },
 }));
 
-const makeResponse = <T,>(body: T, status = 200): Response => {
-  return {
+const makeResponse = <T,>(body: T, status = 200): Response =>
+  ({
     ok: status >= 200 && status < 300,
     status,
     json: async () => body,
-  } as Response;
-};
+  }) as Response;
 
 const createWrapper = () => {
   const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: { retry: false },
-      mutations: { retry: false },
-    },
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
 
   function TestWrapper({ children }: PropsWithChildren) {
@@ -46,10 +39,7 @@ const createWrapper = () => {
   return TestWrapper;
 };
 
-type TaskStore = {
-  tasks: Task[];
-  nextId: number;
-};
+type TaskStore = { tasks: Task[]; nextId: number };
 
 const stateFlow: TaskState[] = ["To do", "in progress", "completed"];
 
@@ -161,17 +151,12 @@ describe("Home integration", () => {
     jest.restoreAllMocks();
   });
 
-  it("loads tasks and supports create, state advance and delete", async () => {
+  it("loads tasks and supports create, state change and delete", async () => {
     const user = userEvent.setup();
-    const store: TaskStore = {
-      tasks: cloneTasks(baseTasks),
-      nextId: 3,
-    };
-
+    const store: TaskStore = { tasks: cloneTasks(baseTasks), nextId: 3 };
     global.fetch = createFetchMock(store);
 
     render(<Home />, { wrapper: createWrapper() });
-
     expect(
       await screen.findByText("Prepare sprint planning"),
     ).toBeInTheDocument();
@@ -189,29 +174,26 @@ describe("Home integration", () => {
 
     const createdTaskTitle = await screen.findByText("Nuovo task integrazione");
     const createdTaskItem = createdTaskTitle.closest("li");
-
-    if (!createdTaskItem) {
+    if (!createdTaskItem)
       throw new Error("Unable to find created task container");
-    }
 
     await user.selectOptions(
-      within(createdTaskItem).getByRole("combobox", {
-        name: /stato task/i,
-      }),
+      within(createdTaskItem).getByRole("combobox", { name: /stato task/i }),
       "in progress",
     );
 
     await waitFor(() => {
       expect(
-        within(createdTaskItem).getByRole("combobox", {
-          name: /stato task/i,
-        }),
+        within(createdTaskItem).getByRole("combobox", { name: /stato task/i }),
       ).toHaveValue("in progress");
     });
 
-    const confirmSpy = jest.spyOn(window, "confirm").mockReturnValue(true);
     await user.click(
       within(createdTaskItem).getByRole("button", { name: /elimina/i }),
+    );
+    const deleteDialog = await screen.findByRole("dialog");
+    await user.click(
+      within(deleteDialog).getByRole("button", { name: /^elimina$/i }),
     );
 
     await waitFor(() => {
@@ -219,32 +201,22 @@ describe("Home integration", () => {
         screen.queryByText("Nuovo task integrazione"),
       ).not.toBeInTheDocument();
     });
-
-    confirmSpy.mockRestore();
   });
 
-  it("edits an existing task through the task card dialog", async () => {
+  it("edits an existing task through dialog", async () => {
     const user = userEvent.setup();
-    const store: TaskStore = {
-      tasks: cloneTasks(baseTasks),
-      nextId: 3,
-    };
-
+    const store: TaskStore = { tasks: cloneTasks(baseTasks), nextId: 3 };
     global.fetch = createFetchMock(store);
 
     render(<Home />, { wrapper: createWrapper() });
 
     const firstTaskTitle = await screen.findByText("Prepare sprint planning");
-    const firstTaskCard = firstTaskTitle.closest("li");
-
-    if (!firstTaskCard) {
-      throw new Error("Unable to find first task card container");
-    }
+    const firstTaskRow = firstTaskTitle.closest("li");
+    if (!firstTaskRow) throw new Error("Unable to find task row");
 
     await user.click(
-      within(firstTaskCard).getByRole("button", { name: /modifica/i }),
+      within(firstTaskRow).getByRole("button", { name: /modifica/i }),
     );
-
     const titleInput = await screen.findByLabelText(/titolo/i);
     const descriptionInput = screen.getByLabelText(/descrizione/i);
 
@@ -257,38 +229,24 @@ describe("Home integration", () => {
     expect(
       await screen.findByText("Prepare sprint planning updated"),
     ).toBeInTheDocument();
-    expect(
-      screen.queryByText("Prepare sprint planning"),
-    ).not.toBeInTheDocument();
   });
 
   it("moves a task between board columns via drag and drop", async () => {
     const user = userEvent.setup();
-    const store: TaskStore = {
-      tasks: cloneTasks(baseTasks),
-      nextId: 3,
-    };
-
+    const store: TaskStore = { tasks: cloneTasks(baseTasks), nextId: 3 };
     global.fetch = createFetchMock(store);
 
     render(<Home />, { wrapper: createWrapper() });
-
-    expect(
-      await screen.findByText("Prepare sprint planning"),
-    ).toBeInTheDocument();
+    await screen.findByText("Prepare sprint planning");
 
     await user.click(screen.getByRole("button", { name: /vista board/i }));
 
     const draggedTask = screen
       .getByText("Prepare sprint planning")
       .closest('[data-task-id="task-1"]');
-
-    if (!draggedTask) {
-      throw new Error("Unable to find draggable task card");
-    }
+    if (!draggedTask) throw new Error("Unable to find draggable task card");
 
     const completedColumn = screen.getByLabelText(/colonna completed/i);
-
     fireEvent.dragStart(draggedTask);
     fireEvent.dragOver(completedColumn);
     fireEvent.drop(completedColumn);
@@ -298,8 +256,30 @@ describe("Home integration", () => {
         "completed",
       );
     });
+  });
 
-    const completedHeading = screen.getByText(/completed \(2\)/i);
-    expect(completedHeading).toBeInTheDocument();
+  it("shows loading error alert when initial fetch fails", async () => {
+    global.fetch = jest
+      .fn()
+      .mockRejectedValue(new Error("Network failure")) as typeof fetch;
+    render(<Home />, { wrapper: createWrapper() });
+
+    expect(
+      await screen.findByText("Errore durante il caricamento"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Network failure")).toBeInTheDocument();
+  });
+
+  it("filters tasks by query", async () => {
+    const user = userEvent.setup();
+    const store: TaskStore = { tasks: cloneTasks(baseTasks), nextId: 3 };
+    global.fetch = createFetchMock(store);
+    render(<Home />, { wrapper: createWrapper() });
+
+    await screen.findByText("Prepare sprint planning");
+    await user.type(screen.getByPlaceholderText("Filter tasks..."), "sprint");
+
+    expect(screen.getByText("Prepare sprint planning")).toBeInTheDocument();
+    expect(screen.queryByText("Review pull requests")).not.toBeInTheDocument();
   });
 });

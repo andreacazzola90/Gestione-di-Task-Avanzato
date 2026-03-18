@@ -9,7 +9,11 @@
     "lint": "eslint",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:ui": "jest --coverage --collectCoverageFrom=\"src/**/*.{ts,tsx}\" --coverageReporters=html"
+    "test:coverage": "jest --coverage --collectCoverageFrom=\"src/**/*.{ts,tsx}\" --coverageReporters=html",
+    "test:ui": "jest --coverage --collectCoverageFrom=\"src/**/*.{ts,tsx}\" --coverageReporters=html",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:report": "playwright show-report"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
