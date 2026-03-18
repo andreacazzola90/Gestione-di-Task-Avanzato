@@ -122,7 +122,8 @@ const deleteTaskRequest = async (id: string) => {
     method: "DELETE",
   });
 
-  if (!response.ok) {
+  // 404 means the task is already gone — treat as success
+  if (!response.ok && response.status !== 404) {
     throw new Error(await getResponseMessage(response));
   }
 };

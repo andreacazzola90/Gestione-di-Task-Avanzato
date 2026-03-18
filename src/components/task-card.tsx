@@ -64,6 +64,7 @@ export function TaskCard({
 
   const createdAtText = new Date(task.createdAt).toLocaleString("it-IT");
   const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const {
     register,
     handleSubmit,
@@ -104,7 +105,7 @@ export function TaskCard({
 
   return (
     <Card
-      className={`transition-opacity ${compact ? "gap-3 py-4" : ""} ${
+      className={`bg-white transition-opacity ${compact ? "gap-3 py-4" : ""} ${
         isDragging ? "opacity-50" : "opacity-100"
       }`}
       draggable={draggable && !isMutating}
@@ -236,26 +237,7 @@ export function TaskCard({
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => {
-              const isConfirmed = window.confirm(
-                `Sei sicuro di voler eliminare il task \"${task.title}\"?`,
-              );
-
-              if (!isConfirmed) {
-                return;
-              }
-
-              void (async () => {
-                const wasDeleted = await onDeleteTask(task.id);
-
-                if (wasDeleted) {
-                  toast.success("Task eliminato");
-                  return;
-                }
-
-                toast.error("Impossibile eliminare il task");
-              })();
-            }}
+            onClick={() => setDeleteOpen(true)}
             disabled={isMutating}
           >
             <Trash2 className="h-4 w-4" />
@@ -263,6 +245,46 @@ export function TaskCard({
           </Button>
         </div>
       </CardContent>
+      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Elimina task</DialogTitle>
+            <DialogDescription>
+              Sei sicuro di voler eliminare il task &ldquo;{task.title}&rdquo;?
+              L&apos;operazione non è reversibile.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setDeleteOpen(false)}
+              disabled={isMutating}
+            >
+              Annulla
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isMutating}
+              onClick={() => {
+                void (async () => {
+                  const wasDeleted = await onDeleteTask(task.id);
+                  setDeleteOpen(false);
+                  if (wasDeleted) {
+                    toast.success("Task eliminato");
+                  } else {
+                    toast.error("Impossibile eliminare il task");
+                  }
+                })();
+              }}
+            >
+              Elimina
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={editOpen} onOpenChange={handleEditDialogChange}>
         <DialogContent>
           <DialogHeader>
@@ -319,13 +341,17 @@ export function TaskCard({
             <div className="flex justify-end gap-2">
               <Button
                 type="button"
-                variant="outline"
+                variant="ghost"
                 onClick={() => handleEditDialogChange(false)}
                 disabled={isMutating}
               >
                 Annulla
               </Button>
-              <Button type="submit" disabled={isMutating || isSubmittingEdit}>
+              <Button
+                type="submit"
+                variant="outline"
+                disabled={isMutating || isSubmittingEdit}
+              >
                 Salva
               </Button>
             </div>

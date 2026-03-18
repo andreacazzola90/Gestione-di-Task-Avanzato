@@ -9,7 +9,6 @@ import {
   Filter,
   KanbanSquare,
   LayoutDashboard,
-  MoreHorizontal,
   Pencil,
   Plus,
   Trash2,
@@ -52,19 +51,6 @@ const createTaskSchema = z.object({
 });
 
 type CreateTaskFormValues = z.infer<typeof createTaskSchema>;
-type Priority = "High" | "Medium" | "Low";
-
-const getTaskPriority = (task: Task): Priority => {
-  if (task.state === "To do") {
-    return "High";
-  }
-
-  if (task.state === "in progress") {
-    return "Medium";
-  }
-
-  return "Low";
-};
 
 export default function Home() {
   const [open, setOpen] = useState(false);
@@ -75,11 +61,11 @@ export default function Home() {
   const [viewMode, setViewMode] = useState<"list" | "board">("list");
   const [queryFilter, setQueryFilter] = useState("");
   const [stateFilter, setStateFilter] = useState<"all" | TaskState>("all");
-  const [priorityFilter, setPriorityFilter] = useState<"all" | Priority>("all");
-  const [sortBy, setSortBy] = useState<
-    "createdAt" | "title" | "state" | "priority"
-  >("createdAt");
+  const [sortBy, setSortBy] = useState<"createdAt" | "title" | "state">(
+    "createdAt",
+  );
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+  const [deletingTask, setDeletingTask] = useState<Task | null>(null);
 
   const {
     register,
@@ -197,11 +183,8 @@ export default function Home() {
         : true;
       const matchesState =
         stateFilter === "all" ? true : task.state === stateFilter;
-      const taskPriority = getTaskPriority(task);
-      const matchesPriority =
-        priorityFilter === "all" ? true : taskPriority === priorityFilter;
 
-      return matchesQuery && matchesState && matchesPriority;
+      return matchesQuery && matchesState;
     })
     .sort((left, right) => {
       let compareValue = 0;
@@ -222,18 +205,6 @@ export default function Home() {
         compareValue = left.state.localeCompare(right.state, "it", {
           sensitivity: "base",
         });
-      }
-
-      if (sortBy === "priority") {
-        const priorityMap: Record<Priority, number> = {
-          High: 3,
-          Medium: 2,
-          Low: 1,
-        };
-
-        compareValue =
-          priorityMap[getTaskPriority(left)] -
-          priorityMap[getTaskPriority(right)];
       }
 
       return sortDirection === "asc" ? compareValue : -compareValue;
@@ -277,9 +248,17 @@ export default function Home() {
 
   return (
     <main className="min-h-screen w-full bg-gradient-to-b from-zinc-100 to-zinc-50 px-4 py-6 text-zinc-900 sm:px-6 lg:px-8">
+      <Card className="sticky top-0 z-20 border-zinc-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 mb-8">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="text-2xl">Task Manager Dashboard</CardTitle>
+          <div className="flex h-10 w-10 items-center justify-center rounded-full border bg-zinc-100">
+            <User2 className="h-5 w-5 text-zinc-600" />
+          </div>
+        </CardHeader>
+      </Card>
       <div className="grid w-full gap-6 lg:grid-cols-[280px_1fr]">
         <aside className="space-y-4 lg:sticky lg:top-0 lg:h-screen">
-          <Card className="h-full bg-white/90">
+          <Card className=" bg-white/90">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
                 <LayoutDashboard className="h-4 w-4" />
@@ -290,7 +269,7 @@ export default function Home() {
             <CardContent className="space-y-2">
               <Button
                 type="button"
-                variant={viewMode === "list" ? "default" : "outline"}
+                variant={viewMode === "list" ? "outline" : "ghost"}
                 className="w-full justify-start"
                 onClick={() => setViewMode("list")}
               >
@@ -299,7 +278,7 @@ export default function Home() {
               </Button>
               <Button
                 type="button"
-                variant={viewMode === "board" ? "default" : "outline"}
+                variant={viewMode === "board" ? "outline" : "ghost"}
                 className="w-full justify-start"
                 onClick={() => setViewMode("board")}
               >
@@ -311,15 +290,6 @@ export default function Home() {
         </aside>
 
         <section className="space-y-6">
-          <Card className="sticky top-0 z-20 border-zinc-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-2xl">Task Manager Dashboard</CardTitle>
-              <div className="flex h-10 w-10 items-center justify-center rounded-full border bg-zinc-100">
-                <User2 className="h-5 w-5 text-zinc-600" />
-              </div>
-            </CardHeader>
-          </Card>
-
           <Card className="bg-white/90">
             <CardHeader className="flex flex-col justify-between gap-4 md:flex-row md:items-start">
               <div>
@@ -441,22 +411,6 @@ export default function Home() {
                       <option value="in progress">In progress</option>
                       <option value="completed">Completed</option>
                     </select>
-                    <select
-                      id="filter-priority"
-                      className="h-11 rounded-lg border border-dashed border-zinc-300 bg-white px-3 text-sm"
-                      value={priorityFilter}
-                      onChange={(event) =>
-                        setPriorityFilter(
-                          event.target.value as "all" | Priority,
-                        )
-                      }
-                    >
-                      <option value="all">+ Priority</option>
-                      <option value="High">High</option>
-                      <option value="Medium">Medium</option>
-                      <option value="Low">Low</option>
-                    </select>
-
                     <div className="ml-auto flex items-center gap-2">
                       <Filter className="h-4 w-4 text-zinc-500" />
                       <select
@@ -468,15 +422,13 @@ export default function Home() {
                             event.target.value as
                               | "createdAt"
                               | "title"
-                              | "state"
-                              | "priority",
+                              | "state",
                           )
                         }
                       >
                         <option value="createdAt">Ordina: Data</option>
                         <option value="title">Ordina: Titolo</option>
                         <option value="state">Ordina: Stato</option>
-                        <option value="priority">Ordina: Priorita</option>
                       </select>
                       <select
                         id="sort-direction"
@@ -499,7 +451,6 @@ export default function Home() {
                       onClick={() => {
                         setQueryFilter("");
                         setStateFilter("all");
-                        setPriorityFilter("all");
                         setSortBy("createdAt");
                         setSortDirection("desc");
                       }}
@@ -541,7 +492,7 @@ export default function Home() {
               tasks.length > 0 &&
               viewMode === "list" ? (
                 <ul className="overflow-hidden rounded-lg border bg-white">
-                  <li className="hidden grid-cols-[44px_1fr_180px_120px_130px] items-center gap-3 border-b bg-zinc-50 px-3 py-2 text-sm font-medium text-zinc-600 md:grid">
+                  <li className="hidden grid-cols-[44px_1fr_180px_130px] items-center gap-3 border-b bg-zinc-50 px-3 py-2 text-sm font-medium text-zinc-600 md:grid">
                     <div>
                       <input
                         type="checkbox"
@@ -550,13 +501,12 @@ export default function Home() {
                     </div>
                     <p>Task</p>
                     <p>Stato</p>
-                    <p>Priorita</p>
                     <p className="text-right">Azioni</p>
                   </li>
                   {filteredListTasks.map((task) => (
                     <li
                       key={task.id}
-                      className="grid grid-cols-1 gap-2 border-b px-3 py-3 text-sm last:border-b-0 md:grid-cols-[44px_1fr_180px_120px_130px] md:items-center md:gap-3"
+                      className="grid grid-cols-1 gap-2 border-b px-3 py-3 text-sm last:border-b-0 md:grid-cols-[44px_1fr_180px_130px] md:items-center md:gap-3"
                     >
                       <div className="pt-1">
                         <input
@@ -565,7 +515,6 @@ export default function Home() {
                         />
                       </div>
                       <div className="min-w-0">
-                        <p className="font-medium text-zinc-900">{task.id}</p>
                         <p className="truncate text-zinc-800">{task.title}</p>
                         {task.description ? (
                           <p className="truncate text-xs text-zinc-500">
@@ -608,56 +557,26 @@ export default function Home() {
                           <option value="completed">Completed</option>
                         </select>
                       </div>
-                      <p className="font-medium text-zinc-700">
-                        {getTaskPriority(task)}
-                      </p>
                       <div className="flex items-center justify-end gap-1">
                         <Button
                           type="button"
                           variant="ghost"
-                          size="sm"
+                          size="icon"
+                          aria-label={`Modifica task ${task.id}`}
                           onClick={() => openEditDialog(task)}
                           disabled={isMutating}
                         >
                           <Pencil className="h-4 w-4" />
-                          Modifica
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            const isConfirmed = window.confirm(
-                              `Sei sicuro di voler eliminare il task "${task.title}"?`,
-                            );
-
-                            if (!isConfirmed) {
-                              return;
-                            }
-
-                            void (async () => {
-                              const wasDeleted = await deleteTask(task.id);
-
-                              if (wasDeleted) {
-                                toast.success("Task eliminato");
-                                return;
-                              }
-
-                              toast.error("Impossibile eliminare il task");
-                            })();
-                          }}
-                          disabled={isMutating}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                          Elimina
                         </Button>
                         <Button
                           type="button"
                           variant="ghost"
                           size="icon"
-                          disabled
+                          aria-label={`Elimina task ${task.id}`}
+                          onClick={() => setDeletingTask(task)}
+                          disabled={isMutating}
                         >
-                          <MoreHorizontal className="h-4 w-4" />
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     </li>
@@ -740,6 +659,52 @@ export default function Home() {
         </section>
       </div>
 
+      <Dialog
+        open={Boolean(deletingTask)}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) setDeletingTask(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Elimina task</DialogTitle>
+            <DialogDescription>
+              Sei sicuro di voler eliminare il task &ldquo;{deletingTask?.title}
+              &rdquo;? L&apos;operazione non è reversibile.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setDeletingTask(null)}
+              disabled={isMutating}
+            >
+              Annulla
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isMutating}
+              onClick={() => {
+                if (!deletingTask) return;
+                void (async () => {
+                  const wasDeleted = await deleteTask(deletingTask.id);
+                  setDeletingTask(null);
+                  if (wasDeleted) {
+                    toast.success("Task eliminato");
+                  } else {
+                    toast.error("Impossibile eliminare il task");
+                  }
+                })();
+              }}
+            >
+              Elimina
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={editOpen} onOpenChange={handleEditDialogChange}>
         <DialogContent>
           <DialogHeader>
@@ -795,13 +760,17 @@ export default function Home() {
             <div className="flex justify-end gap-2">
               <Button
                 type="button"
-                variant="outline"
+                variant="ghost"
                 onClick={() => handleEditDialogChange(false)}
                 disabled={isMutating}
               >
                 Annulla
               </Button>
-              <Button type="submit" disabled={isMutating || isSubmittingEdit}>
+              <Button
+                type="submit"
+                variant="outline"
+                disabled={isMutating || isSubmittingEdit}
+              >
                 Salva
               </Button>
             </div>

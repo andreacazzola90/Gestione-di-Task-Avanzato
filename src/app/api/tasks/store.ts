@@ -19,7 +19,8 @@ const initialTasks: Task[] = [
   },
   {
     id: "task-3",
-    title: "Write unit tests",
+    title: "Supermercato",
+    description: "fare la spesa",
     state: "in progress",
     createdAt: "2026-03-09T16:00:00.000Z",
   },
