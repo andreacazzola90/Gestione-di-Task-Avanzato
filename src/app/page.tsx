@@ -20,6 +20,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
+
 import {
   Card,
   CardContent,
@@ -247,17 +248,19 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen w-full bg-gradient-to-b from-zinc-100 to-zinc-50 px-4 py-6 text-zinc-900 sm:px-6 lg:px-8">
-      <Card className="sticky top-0 z-20 border-zinc-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 mb-8">
+    <main className="h-screen w-full flex flex-col bg-gradient-to-b from-zinc-100 to-zinc-50 px-4 py-6 text-zinc-900 sm:px-6 lg:px-8">
+      <Card className="shrink-0 border-zinc-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 mb-8">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-2xl">Task Manager Dashboard</CardTitle>
-          <div className="flex h-10 w-10 items-center justify-center rounded-full border bg-zinc-100">
-            <User2 className="h-5 w-5 text-zinc-600" />
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full border bg-zinc-100">
+              <User2 className="h-5 w-5 text-zinc-600" />
+            </div>
           </div>
         </CardHeader>
       </Card>
-      <div className="grid w-full gap-6 lg:grid-cols-[280px_1fr]">
-        <aside className="space-y-4 lg:sticky lg:top-0 lg:h-screen">
+      <div className="grid flex-1 min-h-0 w-full gap-6 lg:grid-cols-[280px_1fr]">
+        <aside className="space-y-4">
           <Card className=" bg-white/90">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
@@ -414,7 +417,7 @@ export default function Home() {
                     <Filter className="h-4 w-4 text-zinc-500" />
                     <select
                       id="sort-by"
-                      className="h-9 rounded-lg border border-zinc-200 bg-white px-3 text-sm"
+                      className="h-9 rounded-lg border border-dashed border-zinc-300 bg-white px-3 text-sm"
                       value={sortBy}
                       onChange={(event) =>
                         setSortBy(
@@ -428,7 +431,7 @@ export default function Home() {
                     </select>
                     <select
                       id="sort-direction"
-                      className="h-9 rounded-lg border border-zinc-200 bg-white px-3 text-sm"
+                      className="h-9 rounded-lg border border-dashed border-zinc-300 bg-white px-3 text-sm"
                       value={sortDirection}
                       onChange={(event) =>
                         setSortDirection(event.target.value as "asc" | "desc")
@@ -513,7 +516,7 @@ export default function Home() {
                         <select
                           id={`task-state-${task.id}`}
                           value={task.state}
-                          className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
+                          className="h-9 w-full rounded-lg border border-dashed border-zinc-300 bg-white px-3 text-sm"
                           disabled={isMutating}
                           onChange={(event) => {
                             const nextState = event.target.value as TaskState;
@@ -605,9 +608,11 @@ export default function Home() {
                           <p className="text-sm font-medium">
                             {column.label} ({columnTasks.length})
                           </p>
-                          <span className="text-xs text-zinc-500">
-                            {isMutating ? "Aggiornamento..." : "Drag & drop"}
-                          </span>
+                          {isMutating ? (
+                            <span className="text-xs text-zinc-500">
+                              Aggiornamento...
+                            </span>
+                          ) : null}
                         </div>
                         <div className="space-y-3 min-h-24">
                           {columnTasks.map((task) => (
