@@ -12,15 +12,178 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Uniform light-blue focus for all form controls */
+:where(input[data-slot="input"], textarea[data-slot="textarea"], select):is(:focus, :focus-visible) {
+  outline: none;
+  border-color: #93c5fd;
+  box-shadow: 0 0 0 3px rgba(191, 219, 254, 0.7);
+}
+
+/* ─── Themes ────────────────────────────────────────────────────────────────
+   Each theme overrides --color-zinc-* and --color-white so that all
+   Tailwind utility classes (bg-zinc-100, text-zinc-600, border-zinc-200…)
+   pick up the new palette without touching any size or spacing values.
+   ────────────────────────────────────────────────────────────────────────── */
+
+/* 1. Default  — baseline zinc (no overrides needed) */
+
+/* 2. Slate — cooler blue-gray */
+[data-theme="slate"] {
+  --color-zinc-50: #f8fafc;
+  --color-zinc-100: #f1f5f9;
+  --color-zinc-200: #e2e8f0;
+  --color-zinc-300: #cbd5e1;
+  --color-zinc-400: #94a3b8;
+  --color-zinc-500: #64748b;
+  --color-zinc-600: #475569;
+  --color-zinc-700: #334155;
+  --color-zinc-800: #1e293b;
+  --color-zinc-900: #0f172a;
+  --color-zinc-950: #020617;
+  --background: #f8fafc;
+  --foreground: #0f172a;
+}
+
+/* 3. Dark — inverted zinc (dark backgrounds, light text) */
+[data-theme="dark"] {
+  --color-zinc-50: #09090b;
+  --color-zinc-100: #18181b;
+  --color-zinc-200: #27272a;
+  --color-zinc-300: #3f3f46;
+  --color-zinc-400: #71717a;
+  --color-zinc-500: #a1a1aa;
+  --color-zinc-600: #d4d4d8;
+  --color-zinc-700: #e4e4e7;
+  --color-zinc-800: #f4f4f5;
+  --color-zinc-900: #fafafa;
+  --color-zinc-950: #ffffff;
+  --color-white: #18181b;
+  --background: #09090b;
+  --foreground: #fafafa;
+}
+
+/* 4. Ocean — sky blue */
+[data-theme="ocean"] {
+  --color-zinc-50: #f0f9ff;
+  --color-zinc-100: #e0f2fe;
+  --color-zinc-200: #bae6fd;
+  --color-zinc-300: #7dd3fc;
+  --color-zinc-400: #38bdf8;
+  --color-zinc-500: #0ea5e9;
+  --color-zinc-600: #0284c7;
+  --color-zinc-700: #0369a1;
+  --color-zinc-800: #075985;
+  --color-zinc-900: #0c4a6e;
+  --color-zinc-950: #082f49;
+  --background: #f0f9ff;
+  --foreground: #0c4a6e;
+}
+
+/* 5. Forest — vibrant green */
+[data-theme="forest"] {
+  --color-zinc-50: #f0fdf4;
+  --color-zinc-100: #dcfce7;
+  --color-zinc-200: #bbf7d0;
+  --color-zinc-300: #86efac;
+  --color-zinc-400: #4ade80;
+  --color-zinc-500: #22c55e;
+  --color-zinc-600: #16a34a;
+  --color-zinc-700: #15803d;
+  --color-zinc-800: #166534;
+  --color-zinc-900: #14532d;
+  --color-zinc-950: #052e16;
+  --background: #f0fdf4;
+  --foreground: #14532d;
+}
+
+/* 6. Sunset — warm orange */
+[data-theme="sunset"] {
+  --color-zinc-50: #fff7ed;
+  --color-zinc-100: #ffedd5;
+  --color-zinc-200: #fed7aa;
+  --color-zinc-300: #fdba74;
+  --color-zinc-400: #fb923c;
+  --color-zinc-500: #f97316;
+  --color-zinc-600: #ea580c;
+  --color-zinc-700: #c2410c;
+  --color-zinc-800: #9a3412;
+  --color-zinc-900: #7c2d12;
+  --color-zinc-950: #431407;
+  --background: #fff7ed;
+  --foreground: #7c2d12;
+}
+
+/* 7. Lavender — soft purple */
+[data-theme="lavender"] {
+  --color-zinc-50: #faf5ff;
+  --color-zinc-100: #f3e8ff;
+  --color-zinc-200: #e9d5ff;
+  --color-zinc-300: #d8b4fe;
+  --color-zinc-400: #c084fc;
+  --color-zinc-500: #a855f7;
+  --color-zinc-600: #9333ea;
+  --color-zinc-700: #7e22ce;
+  --color-zinc-800: #6b21a8;
+  --color-zinc-900: #581c87;
+  --color-zinc-950: #3b0764;
+  --background: #faf5ff;
+  --foreground: #581c87;
+}
+
+/* 8. Rose — pink/rose */
+[data-theme="rose"] {
+  --color-zinc-50: #fff1f2;
+  --color-zinc-100: #ffe4e6;
+  --color-zinc-200: #fecdd3;
+  --color-zinc-300: #fda4af;
+  --color-zinc-400: #fb7185;
+  --color-zinc-500: #f43f5e;
+  --color-zinc-600: #e11d48;
+  --color-zinc-700: #be123c;
+  --color-zinc-800: #9f1239;
+  --color-zinc-900: #881337;
+  --color-zinc-950: #4c0519;
+  --background: #fff1f2;
+  --foreground: #881337;
+}
+
+/* 9. Mocha — warm coffee brown */
+[data-theme="mocha"] {
+  --color-zinc-50: #fdf8f6;
+  --color-zinc-100: #f5ede8;
+  --color-zinc-200: #e8d5cc;
+  --color-zinc-300: #d4b5a8;
+  --color-zinc-400: #b8917f;
+  --color-zinc-500: #9b7263;
+  --color-zinc-600: #7a5748;
+  --color-zinc-700: #5e4137;
+  --color-zinc-800: #432e28;
+  --color-zinc-900: #2d1c18;
+  --color-zinc-950: #1a0f0c;
+  --background: #fdf8f6;
+  --foreground: #2d1c18;
+}
+
+/* 10. Midnight — deep GitHub-dark navy */
+[data-theme="midnight"] {
+  --color-zinc-50: #0d1117;
+  --color-zinc-100: #161b22;
+  --color-zinc-200: #21262d;
+  --color-zinc-300: #30363d;
+  --color-zinc-400: #8b949e;
+  --color-zinc-500: #c9d1d9;
+  --color-zinc-600: #d4dbe3;
+  --color-zinc-700: #e1e8f0;
+  --color-zinc-800: #edf3f9;
+  --color-zinc-900: #f0f6fc;
+  --color-zinc-950: #f6f8fa;
+  --color-white: #161b22;
+  --background: #0d1117;
+  --foreground: #f0f6fc;
 }

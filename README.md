@@ -1,53 +1,56 @@
-# Gestione Task (versione mia)
+# Gestione di Task Avanzato
 
-Questo progetto e una app fatta con Next.js per gestire task in modo un po piu avanzato.
+Applicazione web per la gestione di task sviluppata con Next.js e TypeScript.
 
-## come avviare
+## Prerequisiti
 
-serve node installato ovviamente.
+- Node.js 18+ (consigliato Node.js 20)
+- npm
+
+## Installazione dipendenze
+
+Esegui dalla root del progetto:
 
 ```bash
 npm install
+```
+
+## Avvio progetto
+
+Avvio in modalita produzione (richiesto):
+
+```bash
+npm run build
+npm start
+```
+
+L'app sara disponibile su http://localhost:3000.
+
+Nota: per sviluppo locale puoi usare anche:
+
+```bash
 npm run dev
 ```
 
-poi apri il browser su:
-http://localhost:3000
+## Esecuzione test
 
-## test
-
-per lanciare i test:
+Per eseguire i test:
 
 ```bash
 npm test
 ```
 
-se vuoi modalita watch:
+Opzionale, esecuzione continua in watch mode:
 
 ```bash
 npm run test:watch
 ```
 
-## mock API con msw
+## Note su architettura e librerie
 
-ho messo msw per mockare la rotta `/api/tasks` nei test, cosi non serve backend vero per provare.
-
-file principali:
-- `src/mocks/handlers.ts` (qui ci sono le risposte fake)
-- `src/mocks/server.ts` (server msw lato test/jest)
-- `src/mocks/browser.ts` (worker browser, opzionale)
-- `jest.setup.ts` (attiva msw prima dei test e resetta dopo ogni test)
-
-endpoint mockati al momento:
-- GET /api/tasks
-- POST /api/tasks
-- PATCH /api/tasks/:id
-- DELETE /api/tasks/:id
-
-nota: i task mock stanno in memoria e si resettano ad ogni test quindi non si sporcano tra loro.
-
-## appunti veloci
-
-- stack: Next.js + TypeScript
-- test: Jest + Testing Library + MSW
-
+- Framework: Next.js (App Router) con React e TypeScript.
+- UI: componenti riutilizzabili (Shadcn) e styling con Tailwind CSS.
+- Form: React Hook Form + Zod per validazione schema-based.
+- Stato server e fetch: hook custom in src/hooks/useTasks.tsx.
+- Test: Jest + Testing Library, con mocking API tramite MSW.
+- API interne: route handlers Next.js in src/app/api/tasks.
