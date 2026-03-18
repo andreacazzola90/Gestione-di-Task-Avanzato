@@ -8,7 +8,6 @@ import {
   CircleAlert,
   Filter,
   KanbanSquare,
-  LayoutDashboard,
   Pencil,
   Plus,
   Trash2,
@@ -67,6 +66,7 @@ export default function Home() {
   );
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [deletingTask, setDeletingTask] = useState<Task | null>(null);
+  const [detailTask, setDetailTask] = useState<Task | null>(null);
 
   const {
     register,
@@ -248,52 +248,54 @@ export default function Home() {
   };
 
   return (
-    <main className="h-screen w-full flex flex-col bg-gradient-to-b from-zinc-100 to-zinc-50 px-4 py-6 text-zinc-900 sm:px-6 lg:px-8">
-      <Card className="shrink-0 border-zinc-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 mb-8">
+    <main className="h-screen w-full flex flex-col bg-gradient-to-b from-zinc-100 to-zinc-50 px-6 py-6 text-zinc-900 sm:px-8 lg:px-48">
+      <Card className="mb-8 shrink-0 border-0 bg-white/95 shadow-md backdrop-blur supports-[backdrop-filter]:bg-white/80">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-2xl">Task Manager Dashboard</CardTitle>
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full border bg-zinc-100">
+            <div className="flex items-center gap-1 rounded-lg border border-zinc-200 bg-zinc-50 p-1">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                title="Vista lista"
+                aria-label="Vista lista"
+                aria-pressed={viewMode === "list"}
+                className={`relative h-9 w-9 ${
+                  viewMode === "list"
+                    ? "border border-zinc-200 bg-white shadow-sm"
+                    : ""
+                }`}
+                onClick={() => setViewMode("list")}
+              >
+                <BarChart3 className="h-4 w-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                title="Vista board"
+                aria-label="Vista board"
+                aria-pressed={viewMode === "board"}
+                className={`relative h-9 w-9 ${
+                  viewMode === "board"
+                    ? "border border-zinc-200 bg-white shadow-sm"
+                    : ""
+                }`}
+                onClick={() => setViewMode("board")}
+              >
+                <KanbanSquare className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="flex h-10 w-10 items-center justify-center rounded-full border border-zinc-200 bg-zinc-100">
               <User2 className="h-5 w-5 text-zinc-600" />
             </div>
           </div>
         </CardHeader>
       </Card>
-      <div className="grid flex-1 min-h-0 w-full gap-6 lg:grid-cols-[280px_1fr]">
-        <aside className="space-y-4">
-          <Card className=" bg-white/90">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <LayoutDashboard className="h-4 w-4" />
-                Workspace
-              </CardTitle>
-              <CardDescription>Navigazione dashboard</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <Button
-                type="button"
-                variant={viewMode === "list" ? "outline" : "ghost"}
-                className="w-full justify-start"
-                onClick={() => setViewMode("list")}
-              >
-                <BarChart3 className="h-4 w-4" />
-                Vista lista
-              </Button>
-              <Button
-                type="button"
-                variant={viewMode === "board" ? "outline" : "ghost"}
-                className="w-full justify-start"
-                onClick={() => setViewMode("board")}
-              >
-                <KanbanSquare className="h-4 w-4" />
-                Vista board
-              </Button>
-            </CardContent>
-          </Card>
-        </aside>
-
-        <section className="space-y-6">
-          <Card className="bg-white/90">
+      <div className="flex flex-1 min-h-0 w-full">
+        <section className="w-full space-y-6">
+          <Card className="border-0 bg-white/90 shadow-md">
             <CardHeader className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
               <div>
                 <CardTitle>
@@ -371,13 +373,13 @@ export default function Home() {
                       <div className="flex justify-end gap-2">
                         <Button
                           type="button"
-                          variant="outline"
                           onClick={() => handleCreateDialogChange(false)}
                         >
                           Annulla
                         </Button>
                         <Button
                           type="submit"
+                          variant="outline"
                           disabled={
                             isMutating || isLoading || isSubmittingCreate
                           }
@@ -392,17 +394,17 @@ export default function Home() {
             </CardHeader>
             <CardContent>
               {viewMode === "list" ? (
-                <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border bg-zinc-50 p-3">
+                <div className="mb-4 flex flex-col gap-2 rounded-lg bg-zinc-50 p-3 shadow-sm sm:flex-row sm:flex-wrap sm:items-center">
                   <Input
                     id="filter-tasks"
                     value={queryFilter}
                     onChange={(event) => setQueryFilter(event.target.value)}
                     placeholder="Filter tasks..."
-                    className="h-9 w-48 bg-white"
+                    className="h-9 w-full bg-white sm:w-48"
                   />
                   <select
                     id="filter-state"
-                    className="h-9 rounded-lg border border-dashed border-zinc-300 bg-white px-3 text-sm"
+                    className="h-9 w-full rounded-lg border border-dashed border-zinc-300 bg-white px-3 text-sm sm:w-auto"
                     value={stateFilter}
                     onChange={(event) =>
                       setStateFilter(event.target.value as "all" | TaskState)
@@ -413,11 +415,11 @@ export default function Home() {
                     <option value="in progress">In progress</option>
                     <option value="completed">Completed</option>
                   </select>
-                  <div className="ml-auto flex items-center gap-2">
-                    <Filter className="h-4 w-4 text-zinc-500" />
+                  <div className="grid w-full grid-cols-1 gap-2 sm:ml-auto sm:flex sm:w-auto sm:items-center">
+                    <Filter className="hidden h-4 w-4 text-zinc-500 sm:block" />
                     <select
                       id="sort-by"
-                      className="h-9 rounded-lg border border-dashed border-zinc-300 bg-white px-3 text-sm"
+                      className="h-9 w-full rounded-lg border border-dashed border-zinc-300 bg-white px-3 text-sm sm:w-auto"
                       value={sortBy}
                       onChange={(event) =>
                         setSortBy(
@@ -431,7 +433,7 @@ export default function Home() {
                     </select>
                     <select
                       id="sort-direction"
-                      className="h-9 rounded-lg border border-dashed border-zinc-300 bg-white px-3 text-sm"
+                      className="h-9 w-full rounded-lg border border-dashed border-zinc-300 bg-white px-3 text-sm sm:w-auto"
                       value={sortDirection}
                       onChange={(event) =>
                         setSortDirection(event.target.value as "asc" | "desc")
@@ -444,6 +446,7 @@ export default function Home() {
                       type="button"
                       variant="outline"
                       size="sm"
+                      className="w-full sm:w-auto"
                       onClick={() => {
                         setQueryFilter("");
                         setStateFilter("all");
@@ -487,8 +490,8 @@ export default function Home() {
               !error &&
               tasks.length > 0 &&
               viewMode === "list" ? (
-                <ul className="overflow-hidden rounded-lg border bg-white">
-                  <li className="hidden grid-cols-[1fr_180px_130px] items-center gap-3 border-b bg-zinc-50 px-3 py-2 text-sm font-medium text-zinc-600 md:grid">
+                <ul className="overflow-hidden rounded-lg bg-white shadow-sm">
+                  <li className="hidden grid-cols-[1fr_180px_130px] items-center gap-3 border-b border-zinc-200 bg-zinc-50 px-3 py-2 text-sm font-medium text-zinc-600 md:grid">
                     <p>Task</p>
                     <p>Stato</p>
                     <p className="text-right">Azioni</p>
@@ -496,10 +499,16 @@ export default function Home() {
                   {filteredListTasks.map((task) => (
                     <li
                       key={task.id}
-                      className="grid grid-cols-1 gap-2 border-b px-3 py-3 text-sm last:border-b-0 md:grid-cols-[1fr_180px_130px] md:items-center md:gap-3"
+                      className="grid grid-cols-1 gap-2 border-b border-zinc-200 px-3 py-3 text-sm last:border-b-0 md:grid-cols-[1fr_180px_130px] md:items-center md:gap-3"
                     >
                       <div className="min-w-0">
-                        <p className="truncate text-zinc-800">{task.title}</p>
+                        <button
+                          type="button"
+                          className="w-full truncate text-left font-semibold text-zinc-800 underline-offset-4 hover:underline"
+                          onClick={() => setDetailTask(task)}
+                        >
+                          {task.title}
+                        </button>
                         {task.description ? (
                           <p className="truncate text-xs text-zinc-500">
                             {task.description}
@@ -580,10 +589,10 @@ export default function Home() {
                     return (
                       <div
                         key={column.state}
-                        className={`space-y-3 rounded-lg border p-3 transition-colors ${
+                        className={`space-y-3 rounded-lg p-3 transition-colors ${
                           isDropTarget
-                            ? "border-zinc-900 bg-zinc-100"
-                            : "border-border bg-zinc-50"
+                            ? "bg-zinc-100 shadow-md ring-2 ring-zinc-300/50"
+                            : "bg-zinc-50 shadow-sm"
                         }`}
                         aria-label={`Colonna ${column.label}`}
                         onDragOver={(event) => {
@@ -630,7 +639,7 @@ export default function Home() {
                             />
                           ))}
                           {columnTasks.length === 0 ? (
-                            <div className="rounded-md border border-dashed border-zinc-300 px-3 py-6 text-center text-sm text-zinc-500">
+                            <div className="rounded-md border border-dashed border-zinc-200 px-3 py-6 text-center text-sm text-zinc-500">
                               Rilascia qui un task
                             </div>
                           ) : null}
@@ -687,6 +696,47 @@ export default function Home() {
             >
               Elimina
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={Boolean(detailTask)}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) setDetailTask(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Dettaglio task</DialogTitle>
+            <DialogDescription>
+              Informazioni dettagliate del task selezionato.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 text-sm">
+            <p>
+              <span className="font-medium">ID:</span> {detailTask?.id}
+            </p>
+            <p>
+              <span className="font-medium">Titolo:</span> {detailTask?.title}
+            </p>
+            {detailTask?.description ? (
+              <div>
+                <p className="font-medium">Descrizione:</p>
+                <p className="mt-1 whitespace-pre-wrap text-muted-foreground">
+                  {detailTask.description}
+                </p>
+              </div>
+            ) : null}
+            <p>
+              <span className="font-medium">Stato:</span> {detailTask?.state}
+            </p>
+            <p>
+              <span className="font-medium">Creato il:</span>{" "}
+              {detailTask
+                ? new Date(detailTask.createdAt).toLocaleString("it-IT")
+                : ""}
+            </p>
           </div>
         </DialogContent>
       </Dialog>

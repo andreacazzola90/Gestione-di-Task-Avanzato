@@ -18,6 +18,13 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* Uniform light-blue focus for all form controls */
+:where(input[data-slot="input"], textarea[data-slot="textarea"], select):is(:focus, :focus-visible) {
+  outline: none;
+  border-color: #93c5fd;
+  box-shadow: 0 0 0 3px rgba(191, 219, 254, 0.7);
+}
+
 /* ─── Themes ────────────────────────────────────────────────────────────────
    Each theme overrides --color-zinc-* and --color-white so that all
    Tailwind utility classes (bg-zinc-100, text-zinc-600, border-zinc-200…)

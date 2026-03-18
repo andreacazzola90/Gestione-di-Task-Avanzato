@@ -105,7 +105,7 @@ export function TaskCard({
 
   return (
     <Card
-      className={`bg-white transition-opacity ${compact ? "gap-3 py-4" : ""} ${
+      className={`border-zinc-200/80 bg-white transition-opacity ${compact ? "gap-3 py-4" : ""} ${
         isDragging ? "opacity-50" : "opacity-100"
       }`}
       draggable={draggable && !isMutating}
@@ -174,7 +174,7 @@ export function TaskCard({
           <select
             id={`task-state-${task.id}`}
             value={task.state}
-            className={`rounded-lg border border-dashed border-zinc-300 bg-white px-2 text-xs ${
+            className={`rounded-lg border border-dashed border-zinc-200 bg-white px-2 text-xs ${
               compact ? "h-6" : "h-7"
             }`}
             onChange={(event) => {
